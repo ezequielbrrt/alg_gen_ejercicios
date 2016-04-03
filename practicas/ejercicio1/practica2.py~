@@ -1,0 +1,116 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
+import cruza.cruzas as cruza
+import mutacion.mutaciones as mutacion
+import seleccion.seleccion as seleccion
+from tqdm import tqdm
+import random  as ran
+import numpy as np
+
+###########Calcular Aptitud########
+def contarAlelo(individuo):
+	contador = 0
+	individuo = str(individuo)
+	for i in individuo:
+		if i == "1":
+			contador += 1
+	return contador
+def calcular_Aptitud(poblacion):
+	aptitud = []
+	for i in range(len(poblacion)):
+		aptitud.append(contarAlelo(poblacion[i]))
+	return aptitud
+##############################
+
+#############Crear Poblacion############
+def genotipo(tamanioGenotipo):
+	gen = ""
+	for i in range(tamanioGenotipo):
+		x = ran.randint(0,1)
+		gen = gen + str(x)
+	return gen
+def crearPoblacion(tamanioPoblacion,tamanioGenotipo):
+	arr = []
+	for i in range(tamanioPoblacion):
+		x = genotipo(tamanioGenotipo)
+		arr.append(x)
+	return arr
+##########################################
+
+####################Elitismo######################
+def getKey(item):
+	return item[1]
+def ordenar(poblacion, aptitud):
+	lista = []
+	aux = []
+	ordenados = [] 
+	for i,(pob,apt) in enumerate(zip(poblacion,aptitud)):
+		aux.append(i)
+		aux.append(apt)
+		aux.append(pob)
+		lista.append(aux)
+		aux = []
+	lista = sorted(lista,key=getKey,reverse=True)
+	for x  in range(len(poblacion)):
+		ordenados.append(lista[x][2])
+	return ordenados
+def elitismo(poblacion, mejoresIndividuos,aptitud,numeroMejoresIndividuos):
+	if mejoresIndividuos == None:
+		ordenados = ordenar(poblacion,aptitud)
+		mejoresIndividuos = []
+		for i in range(0,numeroMejoresIndividuos):
+			mejoresIndividuos.append(ordenados[i])
+	else:
+		ordenados = ordenar(poblacion,aptitud)
+		for x in range(numeroMejoresIndividuos):
+			mejoresIndividuos.append(ordenados[x])
+		aptitud = calcular_Aptitud(mejoresIndividuos)
+		ordenados2 = ordenar(mejoresIndividuos,aptitud)
+		mejoresIndividuos = ordenados2[0:5]
+	return mejoresIndividuos
+##############################################
+
+
+
+def algoritmoGeneticoSimple(tamanioPoblacion,numeroGeneraciones,porcentajeCruza,
+	porcentajeMutacion, numeroMejoresIndividuos, tamanioGenotipo,mejoresIndividuos):
+	generacionActual = 0
+	poblacion = crearPoblacion(tamanioPoblacion,tamanioGenotipo)
+	aptitud = calcular_Aptitud(poblacion)
+	mejoresIndividuos = elitismo(poblacion,mejoresIndividuos,aptitud,numeroMejoresIndividuos)
+	print "Mejores Individuos Iniciales \n",mejoresIndividuos
+	print "Aptitudes \n", calcular_Aptitud(mejoresIndividuos)
+	print 
+	listaPadres = seleccion.obtener_lista(poblacion,aptitud) 
+	nuevaPoblacion = poblacion
+	while generacionActual < numeroGeneraciones:
+		nuevaPoblacion = cruza.cruzaPadres(nuevaPoblacion,listaPadres,porcentajeCruza)
+		nuevaPoblacion = mutacion.mutacion_uniforme(nuevaPoblacion, porcentajeMutacion)
+		aptitud = calcular_Aptitud(nuevaPoblacion)
+		mejoresIndividuos = elitismo(nuevaPoblacion,mejoresIndividuos,aptitud,numeroMejoresIndividuos)
+		print "Generación "+str(generacionActual + 1) 
+		print "Mejores Individuos \n", mejoresIndividuos
+		print "Aptitudes \n",calcular_Aptitud(mejoresIndividuos)
+		print
+		listaPadres = seleccion.obtener_lista(nuevaPoblacion,aptitud)
+		generacionActual += 1
+
+def main():
+	tamanioPoblacion = 10
+	numeroGeneraciones = 10
+	porcentajeCruza = 60
+	porcentajeMutacion = 99
+	numeroMejoresIndividuos = 5
+	mejoresIndividuos = None
+	tamanioGenotipo = 10
+	listaPadres = []
+	algoritmoGeneticoSimple(tamanioPoblacion,numeroGeneraciones,porcentajeCruza,
+		porcentajeMutacion, numeroMejoresIndividuos,tamanioGenotipo,mejoresIndividuos)
+ 	
+main()
+
+
+
+
+
